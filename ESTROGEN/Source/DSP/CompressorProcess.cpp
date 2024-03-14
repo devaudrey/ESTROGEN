@@ -69,8 +69,8 @@ float CompressorProcess::processSample(float x, int channel) {
     
     // calculate linear gainSmooth and the final output signal (pre-phase check)
     
-    float gainSmoothLin = convert_lin(gainSmooth);
-    float outputSignal = convert_lin(convert_dB(gainSmoothLin * x) + makeupGain);
+    gainSmoothLin = convert_lin(gainSmooth);
+    outputSignal = convert_lin(convert_dB(gainSmoothLin * x) + makeupGain);
     
     // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
     
@@ -84,6 +84,53 @@ float CompressorProcess::processSample(float x, int channel) {
     return outputSignal;
 }
 
+float CompressorProcess::gainSmoothLinProcess(float x) {
+    
+    // channel is always 0 for lr unlink mode
+    int channel = 0;
+    
+    // convert the previous sample to dB
+    outputPrevious[channel] = convert_dB(abs(outputPrevious[0]));
+    
+    
+    // static gain CPU – calculates compression amount
+    
+    if (outputPrevious[channel] > threshold + kneeWidth/2.f) {
+        gainSC = threshold + ((outputPrevious[channel] - threshold)/(float)ratio);
+    }
+    
+    else if ((outputPrevious[channel] >= threshold - kneeWidth/2.f)&&(outputPrevious[channel] <= threshold + kneeWidth/2.f)) {
+        gainSC = outputPrevious[channel] +
+            ((1.f / (float)ratio - 1.f) * pow(outputPrevious[channel] - threshold + kneeWidth/2.f,2.f))/(2.f * kneeWidth);
+    }
+    else {
+        gainSC = outputPrevious[channel];
+    }
+    
+    
+    
+    // calculates gain change for the upcoming smoothing algorithm
+    
+    gainChange_dB = gainSC - outputPrevious[channel];
+    
+    
+    
+    // gain smoothing algorithm
+    
+    if (gainChange_dB < gainSmoothPrev[channel])
+        gainSmooth = ((1 - alphaA) * gainChange_dB) + (alphaA * gainSmoothPrev[channel]);
+    else {
+        gainSmooth = ((1 - alphaR) * gainChange_dB) + (alphaR * gainSmoothPrev[channel]);
+    }
+    
+    // calculate linear gainSmooth and the final output signal (pre-phase check)
+    
+    gainSmoothLin = convert_lin(gainSmooth);
+
+    return gainSmoothLin;
+    
+}
+
 void CompressorProcess::process(float *buffer, int numSamples, int channel) {
     
     for (int n = 0; n < numSamples; n++) {
@@ -93,12 +140,31 @@ void CompressorProcess::process(float *buffer, int numSamples, int channel) {
     }
 }
 
-void CompressorProcess::processMono(float *buffer, int numSamples, int channel) {
-    
+
+// BROKEN – NEEDS FIXING
+void CompressorProcess::processLrUnlinked(float *bufferL, float *bufferR, int numSamples) {
+
     for (int n = 0; n < numSamples; n++) {
+
+        y = 0.5f * (bufferL[n] + bufferR[n]);
+        gainSmoothLinProcess(y);
         
-        float x = buffer[n];
-        buffer[n] = processSample(x, channel);
+        bufferL[n] = convert_lin(convert_dB(gainSmoothLin * bufferL[n]) + makeupGain);
+        bufferR[n] = convert_lin(convert_dB(gainSmoothLin * bufferR[n]) + makeupGain);
+        
+        // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
+        
+        bufferL[n] *= (y != 0.f) ? y/abs(y) : 1.f;
+        bufferR[n] *= (y != 0.f) ? y/abs(y) : 1.f;
+        
+        // assign previous values and return
+        
+        outputPrevious[0] = bufferL[n];
+        outputPrevious[1] = bufferR[n];
+        
+        gainSmoothPrev[0] = gainSmooth;
+        
+        
     }
 }
 

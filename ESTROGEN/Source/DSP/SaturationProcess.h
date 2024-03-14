@@ -30,6 +30,7 @@ public:
     void prepareToPlay(double sampleRate);
     
     float processSample(float x);
+    float processSample(float &xL, float &xR);
     void process(float * buffer, int numSamples, int channel);
     
     void setDriveAmount(float drive);

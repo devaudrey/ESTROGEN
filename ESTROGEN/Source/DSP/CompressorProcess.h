@@ -20,7 +20,8 @@ public:
     void initVariables();
     
     float processSample(float x, int channel);
-    void processMono(float *buffer, int numSamples, int channel);
+    float gainSmoothLinProcess(float x);
+    void processLrUnlinked(float *bufferL, float *bufferR, int numSamples);
     void process(float * buffer, int numSamples, int channel);
       
 //    void prepareForNextLoop(float prevOutputSample_dB, float prevGainSmooth);
@@ -55,8 +56,12 @@ private:
     float gainChange_dB;
     float gainSmooth = 0.f;
     
+    float gainSmoothLin;
+    float outputSignal;
+    
     float gainSmoothPrev[2] = {0.f};
     float outputPrevious[2] = {0.f};
     
+    float y;
 };
 
