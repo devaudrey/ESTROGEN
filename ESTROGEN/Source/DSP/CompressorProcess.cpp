@@ -70,7 +70,7 @@ float CompressorProcess::processSample(float x, int channel) {
     // calculate linear gainSmooth and the final output signal (pre-phase check)
     
     gainSmoothLin = convert_lin(gainSmooth);
-    outputSignal = convert_lin(convert_dB(gainSmoothLin * x) + makeupGain);
+    outputSignal = gainSmoothLin * x;
     
     // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
     
@@ -80,6 +80,8 @@ float CompressorProcess::processSample(float x, int channel) {
     
     outputPrevious[channel] = outputSignal;
     gainSmoothPrev[channel] = gainSmooth;
+    
+    outputSignal = convert_lin(convert_dB(outputSignal) + makeupGain);
     
     return outputSignal;
 }
@@ -159,8 +161,7 @@ void CompressorProcess::processLrUnlinked(float *bufferL, float *bufferR, int nu
         
         // assign previous values and return
         
-        outputPrevious[0] = bufferL[n];
-        outputPrevious[1] = bufferR[n];
+        outputPrevious[0] = y * gainSmoothLin;
         
         gainSmoothPrev[0] = gainSmooth;
         
