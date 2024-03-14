@@ -1,12 +1,12 @@
 /*
-  ==============================================================================
-
-    CompressorProcess.cpp
-    Created: 22 Feb 2024 3:06:16pm
-    Author:  audrey dawson
-
-  ==============================================================================
-*/
+ ==============================================================================
+ 
+ CompressorProcess.cpp
+ Created: 22 Feb 2024 3:06:16pm
+ Author:  audrey dawson
+ 
+ ==============================================================================
+ */
 
 #include "CompressorProcess.h"
 
@@ -30,7 +30,7 @@ void CompressorProcess::initVariables(){
 }
 
 float CompressorProcess::processSample(float x, int channel) {
-
+    
     // convert the previous sample to dB
     
     outputPrevious[channel] = convert_dB(abs(outputPrevious[channel]));
@@ -45,7 +45,7 @@ float CompressorProcess::processSample(float x, int channel) {
     
     else if ((outputPrevious[channel] >= threshold - kneeWidth/2.f)&&(outputPrevious[channel] <= threshold + kneeWidth/2.f)) {
         gainSC = outputPrevious[channel] +
-            ((1.f / (float)ratio - 1.f) * pow(outputPrevious[channel] - threshold + kneeWidth/2.f,2.f))/(2.f * kneeWidth);
+        ((1.f / (float)ratio - 1.f) * pow(outputPrevious[channel] - threshold + kneeWidth/2.f,2.f))/(2.f * kneeWidth);
     }
     else {
         gainSC = outputPrevious[channel];
@@ -101,7 +101,7 @@ float CompressorProcess::gainSmoothLinProcess(float x) {
     
     else if ((outputPrevious[channel] >= threshold - kneeWidth/2.f)&&(outputPrevious[channel] <= threshold + kneeWidth/2.f)) {
         gainSC = outputPrevious[channel] +
-            ((1.f / (float)ratio - 1.f) * pow(outputPrevious[channel] - threshold + kneeWidth/2.f,2.f))/(2.f * kneeWidth);
+        ((1.f / (float)ratio - 1.f) * pow(outputPrevious[channel] - threshold + kneeWidth/2.f,2.f))/(2.f * kneeWidth);
     }
     else {
         gainSC = outputPrevious[channel];
@@ -126,7 +126,7 @@ float CompressorProcess::gainSmoothLinProcess(float x) {
     // calculate linear gainSmooth and the final output signal (pre-phase check)
     
     gainSmoothLin = convert_lin(gainSmooth);
-
+    
     return gainSmoothLin;
     
 }
@@ -143,9 +143,9 @@ void CompressorProcess::process(float *buffer, int numSamples, int channel) {
 
 // BROKEN – NEEDS FIXING
 void CompressorProcess::processLrUnlinked(float *bufferL, float *bufferR, int numSamples) {
-
+    
     for (int n = 0; n < numSamples; n++) {
-
+        
         y = 0.5f * (bufferL[n] + bufferR[n]);
         gainSmoothLinProcess(y);
         
@@ -171,9 +171,9 @@ void CompressorProcess::processLrUnlinked(float *bufferL, float *bufferR, int nu
 float CompressorProcess::convert_dB(float sample_lin) {
     
     // takes a linear audio signal sample and converts it to the dB scale
-
+    
     float sample_dB = 20.f * log10(abs(sample_lin) / 1.f);
-
+    
     // no negative infinity values
     if (sample_dB < -96.f) {
         sample_dB = -96.f;
@@ -187,7 +187,7 @@ float CompressorProcess::convert_lin(float sample_dB) {
     // takes a dB audio signal sample and converts it to the linear scale for output
     
     float sample_lin = pow(10.0f, sample_dB * 0.05f);
-
+    
     return sample_lin;
 }
 

@@ -1,12 +1,12 @@
 /*
-  ==============================================================================
-
-    CompressorProcess.h
-    Created: 22 Feb 2024 3:06:16pm
-    Author:  audrey dawson
-
-  ==============================================================================
-*/
+ ==============================================================================
+ 
+ CompressorProcess.h
+ Created: 22 Feb 2024 3:06:16pm
+ Author:  audrey dawson
+ 
+ ==============================================================================
+ */
 
 #pragma once
 #include <math.h>
@@ -23,8 +23,8 @@ public:
     float gainSmoothLinProcess(float x);
     void processLrUnlinked(float *bufferL, float *bufferR, int numSamples);
     void process(float * buffer, int numSamples, int channel);
-      
-//    void prepareForNextLoop(float prevOutputSample_dB, float prevGainSmooth);
+    
+    //    void prepareForNextLoop(float prevOutputSample_dB, float prevGainSmooth);
     
     float convert_dB(float sample_lin);
     float convert_lin (float sample_dB);
