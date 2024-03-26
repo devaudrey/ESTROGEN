@@ -62,6 +62,8 @@ private:
     float gainSmoothPrev[2] = {0.f};
     float outputPrevious[2] = {0.f};
     
-    float y;
+    float x_mono;
+    float L_x;
+    float R_x;
 };
 

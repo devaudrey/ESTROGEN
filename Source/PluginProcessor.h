@@ -79,6 +79,7 @@ private:
     // Overall plugin operation variables
     
     CompressorMode mode = MONO;
+    
     float inputGainTrim;         // input gain or trim
     float outputGainTrim;        // output gain or trim
     float mixGain = 100.f;       // Wet/dry blend of plugin (overall)

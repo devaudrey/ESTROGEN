@@ -148,20 +148,24 @@ void CompressorProcess::processLrUnlinked(float *bufferL, float *bufferR, int nu
     
     for (int n = 0; n < numSamples; n++) {
         
-        y = 0.5f * (bufferL[n] + bufferR[n]);
-        gainSmoothLinProcess(y);
+        x_mono = 0.5f * (bufferL[n] + bufferR[n]);
         
-        bufferL[n] = convert_lin(convert_dB(gainSmoothLin * bufferL[n]) + makeupGain);
-        bufferR[n] = convert_lin(convert_dB(gainSmoothLin * bufferR[n]) + makeupGain);
+        L_x = bufferL[n];
+        R_x = bufferR[n];
+        
+        gainSmoothLinProcess(x_mono);
+        
+        L_x = convert_lin(convert_dB(gainSmoothLin * L_x) + makeupGain);
+        R_x = convert_lin(convert_dB(gainSmoothLin * R_x) + makeupGain);
         
         // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
         
-        bufferL[n] *= (y != 0.f) ? y/abs(y) : 1.f;
-        bufferR[n] *= (y != 0.f) ? y/abs(y) : 1.f;
+        bufferL[n] *= (x_mono != 0.f) ? x_mono/abs(x_mono) : 1.f;
+        bufferR[n] *= (x_mono != 0.f) ? x_mono/abs(x_mono) : 1.f;
         
         // assign previous values and return
         
-        outputPrevious[0] = y * gainSmoothLin;
+        outputPrevious[0] = x_mono * gainSmoothLin;
         
         gainSmoothPrev[0] = gainSmooth;
         

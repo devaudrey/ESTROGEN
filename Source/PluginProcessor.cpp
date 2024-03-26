@@ -157,6 +157,7 @@ void EstrogenAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     compressor.setAttack(.450f);
     compressor.setRelease(64.f);
     
+    mode = LR;
     
     if (totalNumInputChannels == 1) {
         mode = MONO;
