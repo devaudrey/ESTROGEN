@@ -1,12 +1,12 @@
 /*
-  ==============================================================================
-
-    SaturationProcess.cpp
-    Created: 22 Feb 2024 3:05:46pm
-    Author:  audrey dawson
-
-  ==============================================================================
-*/
+ ==============================================================================
+ 
+ SaturationProcess.cpp
+ Created: 22 Feb 2024 3:05:46pm
+ Author:  audrey dawson
+ 
+ ==============================================================================
+ */
 
 #include "SaturationProcess.h"
 
@@ -22,27 +22,23 @@ void SaturationProcess::prepareToPlay(double sampleRate) {
 
 float SaturationProcess::processSample(float x) {
     
-    float y = x;
-    float outputTrim_lin = (outputTrim_dB == 0.f) ? 0.f : pow(10.0f, outputTrim_dB * 0.05f);
+    y = x;
+    y = convert_dB(y) + inputGainTrimVal;
+    y = convert_lin(y);
     
-    
-    if (x != 0.f) {
-       
+    if (y != 0.0f) {
+        
+        // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
+        y *= (x/abs(x));
+        
         // apply drive amount
         y *= driveValue;
         
         // saturate the signal
         // (2/pi) * atan(drive * x) // << THE EQUATION
-
+        
         y = _twoOverPi * atan(y);
         
-        // apply trim to signal
-        if (x * -1 < 0) {
-            y += outputTrim_lin;
-        }
-        else {
-            y -= outputTrim_lin;
-        }
     }
     
     // return processed signal
@@ -61,17 +57,42 @@ void SaturationProcess::process(float * buffer, int numSamples, int channel) {
     
 }
 
+float SaturationProcess::convert_dB(float sample_lin) {
+    
+    // takes a linear audio signal sample and converts it to the dB scale
+    
+    float sample_dB = 20.f * log10(abs(sample_lin) / 1.f);
+    
+    // no negative infinity values
+    if (sample_dB < -96.f) {
+        sample_dB = -96.f;
+    }
+    
+    return sample_dB;
+}
+
+float SaturationProcess::convert_lin(float sample_dB) {
+    
+    // takes a dB audio signal sample and converts it to the linear scale for output
+    
+    float sample_lin = pow(10.0f, sample_dB * 0.05f);
+    
+    return sample_lin;
+}
+
 // –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
 void SaturationProcess::setDriveAmount(float drive) {
     
     driveValue = drive;
     CompressorProcess compress;
-    compress.setKneeWidth(drive * 0.55f + 0.5f);
+    compress.setKneeWidth( (drive - 1) * 0.55f + 0.5f);
 }
 
-void SaturationProcess::setOutputTrim(float outputGainReduction) {
+void SaturationProcess::setInputGain(float gainTrim) {
     
-    outputTrim_dB = outputGainReduction;
+    inputGainTrimVal = gainTrim;
     
 }
+
+

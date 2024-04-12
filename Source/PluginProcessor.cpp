@@ -145,25 +145,24 @@ void EstrogenAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     
+    //    if (totalNumInputChannels == 1) {
+    //        mode = MONO;
+    //    }
+    
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
-    saturator.setOutputTrim(0.f);
-    saturator.setDriveAmount(1.5f);
+    saturator.setInputGain(inputGainTrim);
+    saturator.setDriveAmount(driveAmount);
     
-    compressor.setThreshold(-26.f);
-    compressor.setMakeupGain(17.f);
-    compressor.setRatio(4);
-    compressor.setAttack(.450f);
-    compressor.setRelease(64.f);
-    
-    mode = LR;
-    
-    if (totalNumInputChannels == 1) {
-        mode = MONO;
-    }
+    compressor.setThreshold(threshold_dB);
+    compressor.setRatio(3);
+    compressor.setAttack(attack_ms);
+    compressor.setRelease(release_ms);
+    compressor.setMakeupGain(outputGainTrim);
     
     
+    juce::dsp::AudioBlock<float> dryBlock(buffer);
     juce::dsp::AudioBlock<float> block(buffer);
     auto N = buffer.getNumSamples();
     auto N_oversample = buffer.getNumSamples() * 4.0;
@@ -173,7 +172,7 @@ void EstrogenAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     // Test if Saturator is bypassed to saturate
     //==============================================================================
     
-    if (!satBypassState) {
+    if (satBypassState == false) {
         
         auto oversampledBuffer = oversampler.processSamplesUp(block);
         
@@ -182,41 +181,11 @@ void EstrogenAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
             auto* channelData = oversampledBuffer.getChannelPointer(channel);
             saturator.process(channelData, N_oversample, channel);
             
-        }
-        
-        oversampler.processSamplesDown(block);
-    }
-    
-    //==============================================================================
-    //  Compressor Processes
-    //==============================================================================
-    
-    
-    //  Mono/LR link
-    
-    if (mode == MONO) {
-        
-        if (totalNumInputChannels == 0) {
-            auto* channelData = buffer.getWritePointer (0);
-            compressor.process(channelData, N, 0);
-        }
-        
-        else {
-            
-            auto* channelDataL = buffer.getWritePointer(0);
-            auto* channelDataR = buffer.getWritePointer(1);
-            compressor.processLrUnlinked(channelDataL, channelDataR, N);
+            oversampler.processSamplesDown(block);
+
+            compressor.process(channelData, N, channel);
             
         }
-        
-    }
-    
-    
-    else if (mode == MS) {
-        
-        
-        
-        
     }
     
     else {
@@ -225,8 +194,52 @@ void EstrogenAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
             
             auto* channelData = buffer.getWritePointer (channel);
             compressor.process(channelData, N, channel);
+            
         }
     }
+    
+    //==============================================================================
+    //  Compressor Processes
+    //==============================================================================
+    
+    
+    //  Mono/LR link TBD (broken)
+    
+    //    if (mode == MONO) {
+    //
+    //        if (totalNumInputChannels == 0) {
+    //            auto* channelData = buffer.getWritePointer (0);
+    //            compressor.process(channelData, N, 0);
+    //        }
+    //
+    //        else {
+    //
+    //            auto* channelDataL = buffer.getWritePointer(0);
+    //            auto* channelDataR = buffer.getWritePointer(1);
+    //            compressor.processLrUnlinked(channelDataL, channelDataR, N);
+    //
+    //        }
+    //
+    //    }
+    
+    //  MS mode TBD (broken)
+    
+    //    else if (mode == MS) {
+    //
+    //        //tbd
+    //
+    //    }
+    //
+    
+    
+    // LR DELINK MODE (working)
+    
+//    for (int channel = 0; channel < totalNumInputChannels; ++channel) {
+//
+//        auto* channelData = buffer.getWritePointer (channel);
+//        compressor.process(channelData, N, channel);
+//
+//    }
     
     
     
