@@ -28,9 +28,6 @@ float SaturationProcess::processSample(float x) {
     
     if (y != 0.0f) {
         
-        // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
-        y *= (x/abs(x));
-        
         // apply drive amount
         y *= driveValue;
         
@@ -38,6 +35,9 @@ float SaturationProcess::processSample(float x) {
         // (2/pi) * atan(drive * x) // << THE EQUATION
         
         y = _twoOverPi * atan(y);
+        
+        // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
+        y *= (x/abs(x));
         
     }
     

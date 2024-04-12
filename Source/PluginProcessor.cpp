@@ -161,8 +161,6 @@ void EstrogenAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     compressor.setRelease(release_ms);
     compressor.setMakeupGain(outputGainTrim);
     
-    
-    juce::dsp::AudioBlock<float> dryBlock(buffer);
     juce::dsp::AudioBlock<float> block(buffer);
     auto N = buffer.getNumSamples();
     auto N_oversample = buffer.getNumSamples() * 4.0;
@@ -172,77 +170,73 @@ void EstrogenAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     // Test if Saturator is bypassed to saturate
     //==============================================================================
     
-    if (satBypassState == false) {
+    
+    
+    
+    auto oversampledBuffer = oversampler.processSamplesUp(block);
+    
+    for (int channel = 0; channel < totalNumInputChannels; ++channel) {
         
-        auto oversampledBuffer = oversampler.processSamplesUp(block);
+        auto* channelData = oversampledBuffer.getChannelPointer(channel);
+        saturator.process(channelData, N, channel);
         
-        for (int channel = 0; channel < totalNumInputChannels; ++channel) {
-            
-            auto* channelData = oversampledBuffer.getChannelPointer(channel);
-            saturator.process(channelData, N_oversample, channel);
-            
-            oversampler.processSamplesDown(block);
+    }
+    
+    oversampler.processSamplesDown(block);
+    
+    for (int channel = 0; channel < totalNumInputChannels; ++channel) {
+        
+        auto* channelData = buffer.getWritePointer(channel);
+        compressor.process(channelData, N, channel);
+        
+    }
+    
 
-            compressor.process(channelData, N, channel);
-            
-        }
-    }
-    
-    else {
-        
-        for (int channel = 0; channel < totalNumInputChannels; ++channel) {
-            
-            auto* channelData = buffer.getWritePointer (channel);
-            compressor.process(channelData, N, channel);
-            
-        }
-    }
-    
-    //==============================================================================
-    //  Compressor Processes
-    //==============================================================================
-    
-    
-    //  Mono/LR link TBD (broken)
-    
-    //    if (mode == MONO) {
-    //
-    //        if (totalNumInputChannels == 0) {
-    //            auto* channelData = buffer.getWritePointer (0);
-    //            compressor.process(channelData, N, 0);
-    //        }
-    //
-    //        else {
-    //
-    //            auto* channelDataL = buffer.getWritePointer(0);
-    //            auto* channelDataR = buffer.getWritePointer(1);
-    //            compressor.processLrUnlinked(channelDataL, channelDataR, N);
-    //
-    //        }
-    //
-    //    }
-    
-    //  MS mode TBD (broken)
-    
-    //    else if (mode == MS) {
-    //
-    //        //tbd
-    //
-    //    }
-    //
-    
-    
-    // LR DELINK MODE (working)
-    
+
+//==============================================================================
+//  Compressor Processes
+//==============================================================================
+
+
+//  Mono/LR link TBD (broken)
+
+//    if (mode == MONO) {
+//
+//        if (totalNumInputChannels == 0) {
+//            auto* channelData = buffer.getWritePointer (0);
+//            compressor.process(channelData, N, 0);
+//        }
+//
+//        else {
+//
+//            auto* channelDataL = buffer.getWritePointer(0);
+//            auto* channelDataR = buffer.getWritePointer(1);
+//            compressor.processLrUnlinked(channelDataL, channelDataR, N);
+//
+//        }
+//
+//    }
+
+//  MS mode TBD (broken)
+
+//    else if (mode == MS) {
+//
+//        //tbd
+//
+//    }
+//
+
+
+// LR DELINK MODE (working)
+
 //    for (int channel = 0; channel < totalNumInputChannels; ++channel) {
 //
 //        auto* channelData = buffer.getWritePointer (channel);
 //        compressor.process(channelData, N, channel);
 //
 //    }
-    
-    
-    
+
+
 }
 
 //==============================================================================

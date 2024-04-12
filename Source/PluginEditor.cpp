@@ -32,9 +32,10 @@ EstrogenAudioProcessorEditor::EstrogenAudioProcessorEditor (EstrogenAudioProcess
     addAndMakeVisible(driveSlider);
     driveSlider.addListener(this);
     
-    satBypassButton.setBounds(150, 300, 30, 30);
-    addAndMakeVisible(satBypassButton);
-    satBypassButton.addListener(this);
+//    satBypassButton.setBounds(150, 300, 30, 30);
+//    satBypassButton.setEnabled(true);
+//    addAndMakeVisible(satBypassButton);
+//    satBypassButton.addListener(this);
     
     attackSlider.setBounds(270, 10, 90, 90);
     attackSlider.setRange(0.020, 5000.0, 0.1);
