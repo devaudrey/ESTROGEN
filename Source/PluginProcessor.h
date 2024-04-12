@@ -60,28 +60,20 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     //==============================================================================
     
-    enum CompressorMode {
-        
-        MONO = 1,   // Default
-        LR = 2,     // Stereo De-link
-        MS = 3      // Mid–side
-        
-    };
+//    enum CompressorMode {
+//
+//        MONO = 1,   // Default
+//        MS = 3,     // Mid–side
+//        LR = 2      // Stereo De-link
+//
+//    };
+//
+//    // Overall plugin operation variables
+//
+//    CompressorMode mode = LR;
     
-    
-private:
-    
-    SaturationProcess saturator;
-    CompressorProcess compressor;
-    
-    juce::dsp::Oversampling<float> oversampler {static_cast<size_t>(getTotalNumOutputChannels()), 2, juce::dsp::Oversampling<float>::FilterType::filterHalfBandFIREquiripple, false, true};
-    
-    // Overall plugin operation variables
-    
-    CompressorMode mode = MONO;
-    
-    float inputGainTrim;         // input gain or trim
-    float outputGainTrim;        // output gain or trim
+    float inputGainTrim = 0.f;         // input gain or trim
+    float outputGainTrim = 0.f;        // output gain or trim
     float mixGain = 100.f;       // Wet/dry blend of plugin (overall)
     
     
@@ -92,11 +84,18 @@ private:
     
     // Compressor-dependant variables
     
-    float attack_ms;
-    float release_ms;
-    float threshold_dB;
+    float attack_ms = 30.f;
+    float release_ms = 1000.f;
+    float threshold_dB = 0.f;
     
     
+    
+private:
+    
+    SaturationProcess saturator;
+    CompressorProcess compressor;
+    
+    juce::dsp::Oversampling<float> oversampler {static_cast<size_t>(getTotalNumOutputChannels()), 2, juce::dsp::Oversampling<float>::FilterType::filterHalfBandFIREquiripple, false, true};
     
     void saturationProcess(juce::AudioBuffer<float> & buffer);
     void compressionProcess(juce::AudioBuffer<float> & buffer);

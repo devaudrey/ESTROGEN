@@ -86,6 +86,36 @@ float CompressorProcess::processSample(float x, int channel) {
     return outputSignal;
 }
 
+// BROKEN – NEEDS FIXING
+void CompressorProcess::processLrUnlinked(float *bufferL, float *bufferR, int numSamples) {
+    
+    for (int n = 0; n < numSamples; n++) {
+        
+        x_mono = 0.5f * (bufferL[n] + bufferR[n]);
+        
+        L_x = bufferL[n];
+        R_x = bufferR[n];
+        
+        gainSmoothLinProcess(x_mono);
+        
+        L_x = convert_lin(convert_dB(gainSmoothLin * L_x) + makeupGain);
+        R_x = convert_lin(convert_dB(gainSmoothLin * R_x) + makeupGain);
+        
+        // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
+        
+        bufferL[n] *= (x_mono != 0.f) ? x_mono/abs(x_mono) : 1.f;
+        bufferR[n] *= (x_mono != 0.f) ? x_mono/abs(x_mono) : 1.f;
+        
+        // assign previous values and return
+        
+        outputPrevious[0] = x_mono * gainSmoothLin;
+        
+        gainSmoothPrev[0] = gainSmooth;
+        
+        
+    }
+}
+
 float CompressorProcess::gainSmoothLinProcess(float x) {
     
     // channel is always 0 for lr unlink mode
@@ -139,37 +169,6 @@ void CompressorProcess::process(float *buffer, int numSamples, int channel) {
         
         float x = buffer[n];
         buffer[n] = processSample(x, channel);
-    }
-}
-
-
-// BROKEN – NEEDS FIXING
-void CompressorProcess::processLrUnlinked(float *bufferL, float *bufferR, int numSamples) {
-    
-    for (int n = 0; n < numSamples; n++) {
-        
-        x_mono = 0.5f * (bufferL[n] + bufferR[n]);
-        
-        L_x = bufferL[n];
-        R_x = bufferR[n];
-        
-        gainSmoothLinProcess(x_mono);
-        
-        L_x = convert_lin(convert_dB(gainSmoothLin * L_x) + makeupGain);
-        R_x = convert_lin(convert_dB(gainSmoothLin * R_x) + makeupGain);
-        
-        // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
-        
-        bufferL[n] *= (x_mono != 0.f) ? x_mono/abs(x_mono) : 1.f;
-        bufferR[n] *= (x_mono != 0.f) ? x_mono/abs(x_mono) : 1.f;
-        
-        // assign previous values and return
-        
-        outputPrevious[0] = x_mono * gainSmoothLin;
-        
-        gainSmoothPrev[0] = gainSmooth;
-        
-        
     }
 }
 

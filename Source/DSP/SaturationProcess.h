@@ -18,13 +18,13 @@ class SaturationProcess {
   
 public:
     
-    enum SaturationType {
-        
-        ARCTAN,
-        EXP_SOFTCLIP,
-        DIODE
-        
-    };
+//    enum SaturationType {
+//
+//        ARCTAN,
+//        EXP_SOFTCLIP,
+//        DIODE
+//
+//    };
     
     
     void prepareToPlay(double sampleRate);
@@ -34,15 +34,19 @@ public:
     void process(float * buffer, int numSamples, int channel);
     
     void setDriveAmount(float drive);
-    void setOutputTrim(float gain);
+    void setInputGain(float gain);
     
+    float convert_dB(float sample_lin);
+    float convert_lin (float sample_dB);
     
 private:
     
     float Fs;
 
+    float y;
+    
     float driveValue = 0.f;
-    float outputTrim_dB = 0.f;
+    float inputGainTrimVal = 0.f;
     
     const float _twoOverPi = 2.f/M_PI;
     
