@@ -26,20 +26,14 @@ float SaturationProcess::processSample(float x) {
     y = convert_dB(y) + inputGainTrimVal;
     y = convert_lin(y);
     
-    if (y != 0.0f) {
-        
-        // apply drive amount
-        y *= driveValue;
-        
-        // saturate the signal
-        // (2/pi) * atan(drive * x) // << THE EQUATION
-        
-        y = _twoOverPi * atan(y);
-        
-        // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
-        y *= (x/abs(x));
-        
+    if (x < 0.f && y > 0.f) {
+        y *= -1.f;
     }
+    
+    // saturate the signal
+    // (2/pi) * atan(drive * x) // << THE EQUATION
+    
+    y = _twoOverPi * atan(y * driveValue);
     
     // return processed signal
     return y;
@@ -61,7 +55,7 @@ float SaturationProcess::convert_dB(float sample_lin) {
     
     // takes a linear audio signal sample and converts it to the dB scale
     
-    float sample_dB = 20.f * log10(abs(sample_lin) / 1.f);
+    float sample_dB = 20.f * log10(abs(sample_lin));
     
     // no negative infinity values
     if (sample_dB < -96.f) {

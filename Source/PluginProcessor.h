@@ -74,7 +74,7 @@ public:
     
     float inputGainTrim = 0.f;         // input gain or trim
     float outputGainTrim = 0.f;        // output gain or trim
-    float mixGain = 100.f;       // Wet/dry blend of plugin (overall)
+    float mixRatio = 1.f;       // Wet/dry blend of plugin (overall)
     
     
     // Saturator-dependant variables
@@ -95,6 +95,8 @@ private:
     SaturationProcess saturator;
     CompressorProcess compressor;
     
+    juce::dsp::DryWetMixer<float> dryWetMixer;
+
     juce::dsp::Oversampling<float> oversampler {static_cast<size_t>(getTotalNumOutputChannels()), 2, juce::dsp::Oversampling<float>::FilterType::filterHalfBandFIREquiripple, false, true};
     
     void saturationProcess(juce::AudioBuffer<float> & buffer);

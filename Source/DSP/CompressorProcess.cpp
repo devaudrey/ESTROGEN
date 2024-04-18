@@ -72,9 +72,6 @@ float CompressorProcess::processSample(float x, int channel) {
     gainSmoothLin = convert_lin(gainSmooth);
     outputSignal = gainSmoothLin * x;
     
-    // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
-    
-    outputSignal *= (x != 0.f) ? x/abs(x) : 1.f;
     
     // assign previous values and return
     
@@ -82,6 +79,12 @@ float CompressorProcess::processSample(float x, int channel) {
     gainSmoothPrev[channel] = gainSmooth;
     
     outputSignal = convert_lin(convert_dB(outputSignal) + makeupGain);
+    
+    // phase check to make sure output signal is the correct sign (+/-) based off of the input signal
+    
+    if (x < 0.f && outputSignal > 0.f) {
+        outputSignal *= -1.f;
+    }
     
     return outputSignal;
 }
@@ -176,7 +179,7 @@ float CompressorProcess::convert_dB(float sample_lin) {
     
     // takes a linear audio signal sample and converts it to the dB scale
     
-    float sample_dB = 20.f * log10(abs(sample_lin) / 1.f);
+    float sample_dB = 20.f * log10(abs(sample_lin));
     
     // no negative infinity values
     if (sample_dB < -96.f) {

@@ -105,6 +105,13 @@ void EstrogenAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     
     setLatencySamples(oversampler.getLatencyInSamples());
     
+    // Prepare the DryWetMixer
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = getTotalNumOutputChannels(); // Assuming same number of channels for input and output
+    dryWetMixer.prepare(spec);
+    
 }
 
 void EstrogenAudioProcessor::releaseResources()
@@ -170,19 +177,24 @@ void EstrogenAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     // Test if Saturator is bypassed to saturate
     //==============================================================================
     
+    // Push dry samples into the DryWetMixer
+    juce::dsp::AudioBlock<float> dryBlock(buffer);
+    dryWetMixer.pushDrySamples(dryBlock);
     
     
-    
-    auto oversampledBuffer = oversampler.processSamplesUp(block);
-    
-    for (int channel = 0; channel < totalNumInputChannels; ++channel) {
+    if (!satBypassState) {
+        auto oversampledBuffer = oversampler.processSamplesUp(block);
         
-        auto* channelData = oversampledBuffer.getChannelPointer(channel);
-        saturator.process(channelData, N, channel);
-        
-    }
+        for (int channel = 0; channel < totalNumInputChannels; ++channel) {
+            
+            auto* channelData = oversampledBuffer.getChannelPointer(channel);
+            saturator.process(channelData, N_oversample, channel);
+            
+        }
     
     oversampler.processSamplesDown(block);
+    
+    }
     
     for (int channel = 0; channel < totalNumInputChannels; ++channel) {
         
@@ -191,52 +203,59 @@ void EstrogenAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
         
     }
     
-
-
-//==============================================================================
-//  Compressor Processes
-//==============================================================================
-
-
-//  Mono/LR link TBD (broken)
-
-//    if (mode == MONO) {
-//
-//        if (totalNumInputChannels == 0) {
-//            auto* channelData = buffer.getWritePointer (0);
-//            compressor.process(channelData, N, 0);
-//        }
-//
-//        else {
-//
-//            auto* channelDataL = buffer.getWritePointer(0);
-//            auto* channelDataR = buffer.getWritePointer(1);
-//            compressor.processLrUnlinked(channelDataL, channelDataR, N);
-//
-//        }
-//
-//    }
-
-//  MS mode TBD (broken)
-
-//    else if (mode == MS) {
-//
-//        //tbd
-//
-//    }
-//
-
-
-// LR DELINK MODE (working)
-
-//    for (int channel = 0; channel < totalNumInputChannels; ++channel) {
-//
-//        auto* channelData = buffer.getWritePointer (channel);
-//        compressor.process(channelData, N, channel);
-//
-//    }
-
-
+    
+    dryWetMixer.setWetMixProportion(mixRatio);
+    
+    // Mix the wet samples with the latency-compensated dry samples
+    juce::dsp::AudioBlock<float> wetBlock(buffer);
+    dryWetMixer.mixWetSamples(wetBlock);
+    
+    
+    
+    //==============================================================================
+    //  Compressor Processes
+    //==============================================================================
+    //
+    //
+    // // Mono/LR link TBD (broken)
+    //
+    //    if (mode == MONO) {
+    //
+    //        if (totalNumInputChannels == 0) {
+    //            auto* channelData = buffer.getWritePointer (0);
+    //            compressor.process(channelData, N, 0);
+    //        }
+    //
+    //        else {
+    //
+    //            auto* channelDataL = buffer.getWritePointer(0);
+    //            auto* channelDataR = buffer.getWritePointer(1);
+    //            compressor.processLrUnlinked(channelDataL, channelDataR, N);
+    //
+    //        }
+    //
+    //    }
+    //
+    //  // MS mode TBD (broken)
+    //
+    //    else if (mode == MS) {
+    //
+    //        //tbd
+    //
+    //    }
+    //
+    //
+    //
+    // // LR DELINK MODE (working)
+    //
+    //    for (int channel = 0; channel < totalNumInputChannels; ++channel) {
+    //
+    //        auto* channelData = buffer.getWritePointer (channel);
+    //        compressor.process(channelData, N, channel);
+    //
+    //    }
+    
+    
 }
 
 //==============================================================================
