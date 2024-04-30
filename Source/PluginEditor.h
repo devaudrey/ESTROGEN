@@ -23,6 +23,9 @@ public:
     EstrogenAudioProcessorEditor (EstrogenAudioProcessor&);
     ~EstrogenAudioProcessorEditor() override;
     
+    using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
+    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
+    
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -47,6 +50,10 @@ private:
     
     juce::ToggleButton satBypassButton;
     
+    
+    std::vector<std::unique_ptr<SliderAttachment>> sliderAttachments;
+    std::vector<std::unique_ptr<ButtonAttachment>> buttonAttachments;
+
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EstrogenAudioProcessorEditor)
 };

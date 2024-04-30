@@ -88,7 +88,21 @@ public:
     float release_ms = 1000.f;
     float threshold_dB = 0.f;
     
+    //APVT
     
+    juce::AudioProcessorValueTreeState apvts;
+
+       
+    static const juce::StringRef KNOB1;
+    static const juce::StringRef KNOB2;
+    static const juce::StringRef KNOB3;
+    static const juce::StringRef KNOB4;
+    static const juce::StringRef KNOB5;
+    static const juce::StringRef KNOB6;
+    static const juce::StringRef KNOB7;
+    
+    static const juce::StringRef BUTTON1;
+       
     
 private:
     
@@ -98,6 +112,22 @@ private:
     juce::dsp::DryWetMixer<float> dryWetMixer;
 
     juce::dsp::Oversampling<float> oversampler {static_cast<size_t>(getTotalNumOutputChannels()), 2, juce::dsp::Oversampling<float>::FilterType::filterHalfBandFIREquiripple, false, true};
+    
+    int ParameterVersionHint = 1;
+    
+    
+    float smoothedInput[2] = {0.f};
+    float smoothedOutput[2] = {0.f};
+    float smoothedDrive[2] = {0.f};
+    float smoothedAttack[2] = {0.f};
+    float smoothedRelease[2] = {0.f};
+    float smoothedThreshold[2] = {0.f};
+    float smoothedMix[2] = {0.f};
+    
+    float alpha = 0.999f;
+    const float respTime = .05f; // smoothing response time in sec
+    
+    juce::AudioProcessorValueTreeState::ParameterLayout createParams();
     
     void saturationProcess(juce::AudioBuffer<float> & buffer);
     void compressionProcess(juce::AudioBuffer<float> & buffer);

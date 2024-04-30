@@ -9,6 +9,19 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+//using Normalise = juce::NormalisableRange<float>;
+
+const juce::StringRef EstrogenAudioProcessor::KNOB1 = "KNOB1";
+const juce::StringRef EstrogenAudioProcessor::KNOB2 = "KNOB2";
+const juce::StringRef EstrogenAudioProcessor::KNOB3 = "KNOB3";
+const juce::StringRef EstrogenAudioProcessor::KNOB4 = "KNOB4";
+const juce::StringRef EstrogenAudioProcessor::KNOB5 = "KNOB5";
+const juce::StringRef EstrogenAudioProcessor::KNOB6 = "KNOB6";
+const juce::StringRef EstrogenAudioProcessor::KNOB7 = "KNOB7";
+
+
+const juce::StringRef EstrogenAudioProcessor::BUTTON1 = "BUTTON1";
+
 //==============================================================================
 EstrogenAudioProcessor::EstrogenAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -19,13 +32,47 @@ EstrogenAudioProcessor::EstrogenAudioProcessor()
 #endif
                   .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
 #endif
-                  )
+                  ),
 #endif
+apvts(*this,nullptr,"Params",createParams())
 {
 }
 
+
 EstrogenAudioProcessor::~EstrogenAudioProcessor()
 {
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout EstrogenAudioProcessor::createParams(){
+    
+    //    std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+    
+    juce::AudioProcessorValueTreeState::ParameterLayout layout;
+    
+    // ParameterID: tag for DAW
+    // String for user/automation lane
+    // Min value
+    // Max value
+    // Starting value
+    
+    // less typing
+    using namespace std;
+    using Normalise = juce::NormalisableRange<float>;
+    
+    
+    
+    // then for all your params you add like this
+    layout.add(make_unique<juce::AudioParameterFloat>(juce::ParameterID{KNOB1,ParameterVersionHint},"Input", -30.f, 30.f, 0.f));
+    layout.add(make_unique<juce::AudioParameterFloat>(juce::ParameterID{KNOB2,ParameterVersionHint},"Output", -30.f, 30.f, 0.f));
+    layout.add(make_unique<juce::AudioParameterFloat>(juce::ParameterID{KNOB3,ParameterVersionHint},"Drive", 1.f, 11.f, 1.f));
+    layout.add(make_unique<juce::AudioParameterFloat>(juce::ParameterID{KNOB4,ParameterVersionHint},"Attack", 0.02f, 5000.f, 250.f));
+    layout.add(make_unique<juce::AudioParameterFloat>(juce::ParameterID{KNOB5,ParameterVersionHint},"Release", 1.f, 10000.f, 500.f));
+    layout.add(make_unique<juce::AudioParameterFloat>(juce::ParameterID{KNOB6,ParameterVersionHint},"Threshold", -30.f, 0.f, 0.f));
+    layout.add(make_unique<juce::AudioParameterFloat>(juce::ParameterID{KNOB7,ParameterVersionHint},"Mix", 0.f, 1.f, 1.f));
+    
+    layout.add(make_unique<juce::AudioParameterBool>(juce::ParameterID{BUTTON1,ParameterVersionHint},"Bypass Saturation", false));
+    
+    return layout;
 }
 
 //==============================================================================
@@ -93,7 +140,7 @@ void EstrogenAudioProcessor::changeProgramName (int index, const juce::String& n
 //==============================================================================
 void EstrogenAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    
+    // oversampling preperation
     double oversampleRate = sampleRate * 4.0;
     
     oversampler.numChannels = getTotalNumInputChannels();
@@ -111,6 +158,9 @@ void EstrogenAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels(); // Assuming same number of channels for input and output
     dryWetMixer.prepare(spec);
+    
+    // prepare alpha
+    alpha = std::exp(-std::log(9.f)/(sampleRate*respTime));
     
 }
 
@@ -191,9 +241,9 @@ void EstrogenAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
             saturator.process(channelData, N_oversample, channel);
             
         }
-    
-    oversampler.processSamplesDown(block);
-    
+        
+        oversampler.processSamplesDown(block);
+        
     }
     
     for (int channel = 0; channel < totalNumInputChannels; ++channel) {
@@ -275,12 +325,25 @@ void EstrogenAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
+    
+    auto currentState = apvts.copyState(); // make a duplicate that won't be updated during write to file
+    
+    std::unique_ptr<juce::XmlElement> xml (currentState.createXml());
+    
+    copyXmlToBinary(*xml, destData);
+    
 }
 
 void EstrogenAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+    
+    std::unique_ptr<juce::XmlElement> xml (getXmlFromBinary(data, sizeInBytes));
+    
+    juce::ValueTree newTree = juce::ValueTree::fromXml(*xml);
+    
+    apvts.replaceState(newTree);
 }
 
 
