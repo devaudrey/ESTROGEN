@@ -43,9 +43,9 @@
 #if ! JUCE_DONT_DECLARE_PROJECTINFO
 namespace ProjectInfo
 {
-    const char* const  projectName    = "SATCOMP";
-    const char* const  companyName    = "SOUNDBYAUDREY";
-    const char* const  versionString  = "1.0.1";
-    const int          versionNumber  = 0x10001;
+    const char* const  projectName    = "ESTROGEN";
+    const char* const  companyName    = "SoundByAudrey";
+    const char* const  versionString  = "1.0.2";
+    const int          versionNumber  = 0x10002;
 }
 #endif
